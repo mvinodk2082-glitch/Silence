@@ -1,123 +1,86 @@
 # Silence
 
-[![Android CI](https://github.com/mvinodk2082-glitch/Silence/actions/workflows/android.yml/badge.svg)](https://github.com/mvinodk2082-glitch/Silence/actions/workflows/android.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/mvinodk2082-glitch/Silence?include_prereleases)](https://github.com/mvinodk2082-glitch/Silence/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/mvinodk2082-glitch/Silence/total)](https://github.com/mvinodk2082-glitch/Silence/releases)
 
-**Device-wide Android ad & tracker blocker** using a **local VPN** and **DNS domain filtering**. No root. No remote VPN server. Traffic is filtered on-device only.
+**Device-wide Android ad & tracker blocker** — local DNS filter via Android VPN API.  
+**No root. No account. No remote VPN server. Open source (GPL-3.0).**
 
-> Version `0.4.0` (Phase 3) — open in Android Studio, grant VPN permission, and turn protection on.
+### ⬇ Download for anyone (non-developers)
 
-## Download CI build (GitHub Actions)
+| | |
+|--|--|
+| **Latest APK** | https://github.com/mvinodk2082-glitch/Silence/releases/latest |
+| **Website** | https://mvinodk2082-glitch.github.io/Silence/ |
+| **Auto-updates** | Install [Obtainium](https://github.com/ImranR98/Obtainium) → add `https://github.com/mvinodk2082-glitch/Silence` |
+| **Privacy** | [docs/PRIVACY.md](docs/PRIVACY.md) |
 
-1. Open [Actions → Android CI](https://github.com/mvinodk2082-glitch/Silence/actions/workflows/android.yml)
-2. Open the latest successful run
-3. Download the **silence-debug-apk** artifact
-4. Install on your phone (allow “install unknown apps” for your browser/Files app)
+> Phone: allow *Install unknown apps* → open APK → **Turn protection on** → accept the VPN prompt (local filter only).
 
-Or after a release workflow run:
+---
+
+## Why people need this
+
+Ads and trackers appear in **browsers and apps**. Browser extensions cannot clean in-app SDKs. Silence sits at the only whole-device choke point Android allows without root: a **local** `VpnService` that filters **DNS**.
+
+## Features
+
+| Area | Capability |
+|------|------------|
+| Coverage | System-wide DNS blocking (apps + browsers) |
+| Privacy | On-device only; no analytics; no remote tunnel |
+| Lists | Built-in samples + remote packs (StevenBlack, AdGuard, OISD, …) |
+| Media ads | Optional audio/video ad domains (DNS limits apply) |
+| Controls | Profiles, allow/block rules, per-app exclusions |
+| Reliability | Battery tips, Always-on VPN guide, restart, boot resume |
+| Languages | English + ES / HI / PT-BR system strings (UI expanding) |
+
+**Honest limits:** DNS cannot block ads served from the same host as content (some streaming). See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+
+## For maintainers: make it visible worldwide
+
+See **[docs/DISTRIBUTION.md](docs/DISTRIBUTION.md)** — GitHub Releases, Obtainium, IzzyOnDroid, F-Droid, Reddit/XDA, Play Store risks, signing.
+
+**Short priority list:**
+
+1. Keep [Releases](https://github.com/mvinodk2082-glitch/Silence/releases) updated with APK + SHA-256  
+2. Share Obtainium + latest release link  
+3. Submit to **IzzyOnDroid**, then **F-Droid** (`fastlane/metadata` ready)  
+4. Post once in FOSS/privacy communities (no spam)  
+5. Optional: release-signed keystore ([docs/SIGNING.md](docs/SIGNING.md))
+
+## Architecture
+
+```
+Apps & browsers → DNS → Silence (block or forward) → upstream DNS
+                 └── only fake DNS IP enters the local TUN
+```
+
+Details: [ARCHITECTURE.md](ARCHITECTURE.md) · Reliability: [docs/RELIABILITY.md](docs/RELIABILITY.md)
+
+## Build from source
 
 ```bash
-gh run download -R mvinodk2082-glitch/Silence -n silence-debug-apk
-```
-
-## Why this exists
-
-Ads follow you across browsers **and** apps. Browser extensions cannot touch in-app SDKs. Silence sits at the network choke point Android *does* allow without root: `VpnService`, then sinkholes known ad, tracker, and media-ad hostnames at DNS time.
-
-## Features (scaffold)
-
-| Feature | Status |
-|---------|--------|
-| Local VPN (no remote exit) | Yes |
-| DNS A/AAAA sinkhole for blocked hosts | Yes |
-| IPv4 + IPv6 fake DNS path | Yes (Phase 1) |
-| Upstream retries, fallbacks, TCP fallback | Yes (Phase 1) |
-| Private DNS bypass warning | Yes (Phase 1) |
-| Stats persist across process death | Yes (Phase 1) |
-| Embedded ad / tracker / media-ad lists | Yes |
-| Quiet notification (no sound) | Yes |
-| Compose UI: Home, Stats, Lists, Rules, Apps, Settings | Yes |
-| Profiles: Balanced / Aggressive / Privacy | Yes (Aggressive expands media list) |
-| Custom allow / block rules | Yes |
-| Per-app package exclusions | Yes (manual package names) |
-| Upstream DNS presets (Cloudflare / Quad9 / Google / AdGuard) | Yes |
-| Remote list packs + on-disk cache | Yes (Phase 2) |
-| Update now / daily WorkManager auto-update | Yes (Phase 2) |
-| Wi‑Fi-only list downloads | Yes (Phase 2) |
-| Installed-app exclusion picker | Yes (Phase 2) |
-| Battery unrestricted prompt | Yes (Phase 3) |
-| Always-on VPN guidance | Yes (Phase 3) |
-| Restart protection + exclusion apply | Yes (Phase 3) |
-| Loop health watchdog / sticky recovery | Yes (Phase 3) |
-| Power-saver flush mode | Yes (Phase 3) |
-| Full packet / HTTPS MITM | Out of scope |
-
-## Architecture (short)
-
-```
-Apps & browsers → system DNS → Silence fake DNS (10.10.10.1)
-                                    │
-                         DomainFilter + blocklists
-                                    │
-                    BLOCK → 0.0.0.0 / ::    ALLOW → upstream DNS (e.g. 1.1.1.1)
-```
-
-Only the fake DNS IP is routed into the TUN. Normal TCP/UDP traffic keeps using your Wi‑Fi/cellular path. See [ARCHITECTURE.md](./ARCHITECTURE.md).
-
-## Requirements
-
-- Android Studio Ladybug+ (or equivalent) with Android SDK 35
-- JDK 17
-- Physical device recommended for VPN testing (emulators vary)
-
-## Build & run
-
-```bash
-cd /home/mkvk/Documents/Silence
-# With Android Studio: Open this folder, wait for Gradle sync, Run 'app'
-# Or CLI (when SDK + wrapper jars are installed):
+# JDK 17 + Android SDK 35
 ./gradlew :app:assembleDebug
 ./gradlew :app:test
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-1. Open the app  
-2. Tap **Turn protection on**  
-3. Accept the Android VPN consent (local filter only)  
-4. Browse; check **Stats** / Home for blocked counts  
-
-## Audio / video ads
-
-Media-oriented hosts (IMA SDK, DoubleClick pubads, AdSwizz, Vungle, AppLovin, …) are in the **Media ads** category (on by default).  
-
-DNS **cannot** strip ads that share the same hostname as the content stream (SSAI / first-party). Details: [docs/LIMITATIONS.md](./docs/LIMITATIONS.md).
-
-## Privacy
-
-- No accounts, no analytics SDK, no remote tunnel  
-- Blocklists may be fetched over HTTPS when you enable remote updates  
-- Stats stay on device  
-
 ## Project layout
 
 ```
-app/src/main/java/com/silence/blocker/
-  vpn/      SilenceVpnService, PacketLoop, VpnController
-  dns/      DnsPacket, DnsServer, UpstreamResolver
-  filter/   DomainFilter, FilterEngine
-  lists/    BuiltinLists, ListRepository
-  data/     SettingsStore, UserRulesStore
-  ui/       Compose screens
+app/…/com/silence/blocker/
+  vpn/ filter/ dns/ lists/ ui/ data/
+docs/          privacy, distribution, site
+fastlane/      store listing metadata (F-Droid / Play style)
 ```
 
-## Roadmap
+## Security
 
-1. **Phase 1** — harden DNS path, IPv6, Private DNS warnings ✅  
-2. **Phase 2** — remote list packs, installed-app picker, scheduled updates ✅  
-3. **Phase 3** — battery, Always-on VPN, recovery ✅  
-4. **Optional** — HTTPS inspection (high trust cost)  
-
-Reliability details: [docs/RELIABILITY.md](./docs/RELIABILITY.md)
+Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Choose a license before publishing (e.g. GPL-3.0 common for ad blockers, or MIT for broader reuse).
+[GPL-3.0](LICENSE) — free to use, study, share, and improve.

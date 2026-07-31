@@ -34,10 +34,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.content.Intent
+import android.net.Uri
 import com.silence.blocker.BuildConfig
 import com.silence.blocker.SilenceApp
 import com.silence.blocker.filter.ProtectionProfile
 import com.silence.blocker.lists.scheduleListUpdates
+import com.silence.blocker.util.UpdateLinks
 import com.silence.blocker.vpn.AlwaysOnVpnGuide
 import com.silence.blocker.vpn.BatteryHelper
 import com.silence.blocker.vpn.PrivateDnsMonitor
@@ -336,9 +339,40 @@ fun SettingsScreen() {
             )
         }
 
+        Text("About & updates", fontWeight = FontWeight.SemiBold)
+        Button(
+            onClick = {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(UpdateLinks.RELEASES_LATEST)),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Check for updates (GitHub)") }
+        OutlinedButton(
+            onClick = {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(UpdateLinks.WEBSITE)),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Open website") }
+        OutlinedButton(
+            onClick = {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(UpdateLinks.PRIVACY)),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Privacy policy") }
+        Text(
+            "Tip: install Obtainium and add\n${UpdateLinks.OBTAINIUM_HINT}\nfor automatic update alerts.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
         Text(
             "Silence ${BuildConfig.VERSION_NAME}\n" +
-                "Local DNS filter · remote packs · battery/Always-on guidance · no remote VPN",
+                "GPL-3.0 · local DNS filter · no remote VPN · no analytics",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

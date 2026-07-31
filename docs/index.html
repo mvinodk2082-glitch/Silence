@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Silence — Device-wide Android Ad Blocker (no root)</title>
+  <meta name="description" content="Silence is a free, open-source Android ad and tracker blocker. Local VPN DNS filter. No remote server. No root required." />
+  <meta name="keywords" content="android ad blocker, dns blocker, privacy, foss, no root, tracker blocker" />
+  <meta property="og:title" content="Silence — Android Ad Blocker" />
+  <meta property="og:description" content="Block ads and trackers across apps and browsers. Open source. Privacy-first. No root." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0B0F14" />
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #121821;
+      --text: #e8eef5;
+      --muted: #94a3b8;
+      --teal: #5eead4;
+      --teal-dim: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #134e4a 0%, transparent 50%), var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+    h1 { font-size: clamp(2rem, 5vw, 2.75rem); margin: 0 0 8px; letter-spacing: -0.03em; }
+    .tag { color: var(--teal); font-weight: 600; font-size: 0.95rem; }
+    p.lead { color: var(--muted); font-size: 1.125rem; margin: 16px 0 28px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+    a.btn {
+      display: inline-block;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .15s ease, opacity .15s;
+    }
+    a.btn:hover { transform: translateY(-1px); }
+    a.primary { background: var(--teal); color: #042f2e; }
+    a.secondary { background: var(--card); color: var(--text); border: 1px solid #1e293b; }
+    .card {
+      background: var(--card);
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin: 16px 0;
+    }
+    .card h2 { margin: 0 0 10px; font-size: 1.15rem; }
+    ul { margin: 0; padding-left: 1.2rem; color: var(--muted); }
+    li { margin: 6px 0; }
+    footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+    code { background: #0b1220; padding: 2px 6px; border-radius: 6px; font-size: 0.9em; }
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 640px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tag">Free · Open source · No root · No remote VPN</div>
+    <h1>Silence</h1>
+    <p class="lead">
+      Block ads and trackers across <strong>browsers and apps</strong> on Android.
+      Silence uses a <strong>local VPN as a DNS filter only</strong> — your traffic is not sent through our servers.
+    </p>
+
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/mvinodk2082-glitch/Silence/releases/latest">
+        Download APK
+      </a>
+      <a class="btn secondary" href="https://github.com/mvinodk2082-glitch/Silence">
+        Source code
+      </a>
+      <a class="btn secondary" href="https://github.com/mvinodk2082-glitch/Silence/blob/main/docs/PRIVACY.md">
+        Privacy policy
+      </a>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h2>Who it’s for</h2>
+        <ul>
+          <li>People tired of ads in every app</li>
+          <li>Privacy users who want tracker blocking</li>
+          <li>Anyone who cannot or will not root</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>How it works</h2>
+        <ul>
+          <li>Local Android VPN API</li>
+          <li>DNS domain blocklists</li>
+          <li>Optional remote list updates</li>
+          <li>Per-app exclusions (banking, etc.)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Install in 60 seconds</h2>
+      <ul>
+        <li>Download the latest APK from Releases</li>
+        <li>Allow “Install unknown apps” for your browser/Files</li>
+        <li>Open Silence → <strong>Turn protection on</strong> → accept VPN</li>
+        <li>Optional: Always-on VPN + unrestricted battery</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Stay updated (recommended)</h2>
+      <p style="color:var(--muted);margin:0 0 10px">
+        Use <a href="https://github.com/ImranR98/Obtainium" style="color:var(--teal)">Obtainium</a>
+        and add this repo URL so new APKs appear automatically:
+      </p>
+      <code>https://github.com/mvinodk2082-glitch/Silence</code>
+    </div>
+
+    <div class="card">
+      <h2>Honest limits</h2>
+      <ul>
+        <li>DNS cannot remove ads served from the same host as content (some streaming)</li>
+        <li>Turn Private DNS off if ads still load</li>
+        <li>Only one VPN can be active at a time</li>
+      </ul>
+    </div>
+
+    <footer>
+      GPL-3.0 ·
+      <a href="https://github.com/mvinodk2082-glitch/Silence" style="color:var(--muted)">GitHub</a> ·
+      Made for people who just want a quieter phone.
+    </footer>
+  </div>
+</body>
+</html>

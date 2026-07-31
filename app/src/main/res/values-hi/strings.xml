@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Silence</string>
+    <string name="notification_channel_name">सुरक्षा स्थिति</string>
+    <string name="notification_channel_desc">Silence DNS फ़िल्टर करते समय शांत सूचना। कोई ध्वनि नहीं।</string>
+    <string name="notification_title">Silence चालू है</string>
+    <string name="notification_text">आज %1$d ब्लॉक · केवल स्थानीय फ़िल्टर</string>
+    <string name="vpn_session_name">Silence</string>
+    <string name="vpn_permission_rationale">Silence Android VPN API का उपयोग केवल स्थानीय फ़िल्टर के रूप में करता है। आपका ट्रैफ़िक किसी रिमोट VPN सर्वर पर नहीं जाता।</string>
+    <string name="private_dns_warning_title">निजी DNS Silence को बायपास कर सकता है</string>
+</resources>

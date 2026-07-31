@@ -1,0 +1,1 @@
+Device-wide DNS ad & tracker blocker. Local VPN only. No root. Open source.

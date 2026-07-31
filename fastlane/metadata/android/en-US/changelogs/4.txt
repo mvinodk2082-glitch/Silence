@@ -1,0 +1,5 @@
+0.4.0 — Phase 3 reliability + public distribution
+• Battery unrestricted guidance
+• Always-on VPN steps
+• Restart protection / health watchdog
+• Debug APK release channel for global testers

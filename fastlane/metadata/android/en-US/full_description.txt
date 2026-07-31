@@ -1,0 +1,28 @@
+Silence blocks ads and trackers across browsers and apps on Android without root.
+
+HOW IT WORKS
+• Uses Android’s local VPN API as a DNS filter only
+• Your traffic is NOT sent through a remote VPN server
+• Sinkholes known ad, tracker, and media-ad domains
+• Optional remote blocklist packs with on-device cache
+
+FEATURES
+• Works system-wide (not just one browser)
+• IPv4 + IPv6 DNS path
+• Profiles: Balanced / Aggressive / Privacy
+• Custom allow/block rules
+• Per-app exclusions (e.g. banking apps)
+• Quiet status notification
+• Battery and Always-on VPN guidance
+
+PRIVACY
+• No account
+• No analytics SDK
+• Stats stay on device
+• Open source (GPL-3.0)
+
+LIMITATIONS
+DNS blocking cannot remove ads served from the same hostname as content (some streaming apps). See project docs for details.
+
+Source: https://github.com/mvinodk2082-glitch/Silence
+Privacy: https://github.com/mvinodk2082-glitch/Silence/blob/main/docs/PRIVACY.md
