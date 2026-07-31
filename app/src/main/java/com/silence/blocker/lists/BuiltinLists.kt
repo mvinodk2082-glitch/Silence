@@ -107,10 +107,10 @@ object BuiltinLists {
         "ads.w55c.net",
         "innovid.com",
         "s.innovid.com",
-        // Audio-adjacent ad tech
+        // Audio-adjacent ad tech (do NOT list ads.spotify.com — parent allowlist
+        // keeps Spotify online; blocking Spotify ad hosts alone rarely is worth offline).
         "audio.adswizz.com",
         "adswizz.com",
-        "ads.spotify.com",
     )
 
     /** Extra media hosts for Aggressive profile — higher breakage risk. */

@@ -106,11 +106,11 @@ class SilenceVpnService : VpnService() {
                 val app = application as SilenceApp
                 val saved = statsStore.loadToday()
                 app.filterEngine.hydrateCounters(saved.blocked, saved.allowed, saved.day)
+                app.listUpdateManager.loadCachedIntoEngine()
                 app.filterEngine.applyUserRules(
                     allow = settings.allowlist.first(),
                     block = settings.blocklist.first(),
                 )
-                app.listUpdateManager.loadCachedIntoEngine()
 
                 PrivateDnsMonitor.refresh(applicationContext)
                 BatteryHelper.refresh(applicationContext)

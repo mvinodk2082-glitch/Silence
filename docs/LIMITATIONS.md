@@ -9,6 +9,17 @@ Silence is a **DNS domain blocker**. That is powerful and privacy-friendly, but 
 - Trackers and analytics beacons
 - **Audio/video ad tech on dedicated hostnames** (IMA SDK, pubads, FreeWheel, AdSwizz, …)
 
+## Spotify (and similar) shows “Offline”
+
+Two separate causes:
+
+1. **VPN detection** — Spotify often treats *any* active VPN interface as no connectivity, even if only DNS is filtered.  
+   **Fix:** Silence → **Apps** → **Bypass Spotify** (or exclude `com.spotify.music`) → **Restart protection**.
+2. **DNS over-blocking** — remote host lists sometimes hit Spotify delivery hosts.  
+   **Fix:** Silence always allowlists core Spotify domains (`spotify.com`, `scdn.co`, …). Still prefer app bypass for VPN detection.
+
+After bypass, Spotify traffic no longer goes through Silence (ads inside Spotify may return).
+
 ## What often still gets through
 
 ### 1. First-party / same-origin ads

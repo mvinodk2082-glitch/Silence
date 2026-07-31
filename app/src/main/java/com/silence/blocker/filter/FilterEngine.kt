@@ -63,7 +63,12 @@ class FilterEngine(
     }
 
     fun applyUserRules(allow: Collection<String>, block: Collection<String>) {
-        filter.setAllowlist(allow)
+        // Compatibility domains always win so remote packs cannot break Spotify, etc.
+        val mergedAllow = (allow.map { it.lowercase().trim() } +
+            com.silence.blocker.lists.CompatibilityAllowlist.domains)
+            .filter { it.isNotEmpty() }
+            .toSet()
+        filter.setAllowlist(mergedAllow)
         filter.setUserBlocklist(block)
     }
 

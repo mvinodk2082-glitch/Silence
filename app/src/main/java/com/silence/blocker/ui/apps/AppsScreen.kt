@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
 import com.silence.blocker.apps.InstalledAppsRepository
+import com.silence.blocker.lists.CompatibilityAllowlist
 import com.silence.blocker.vpn.ProtectionState
 import com.silence.blocker.vpn.VpnController
 import kotlinx.coroutines.Dispatchers
@@ -76,11 +77,56 @@ fun AppsScreen() {
     ) {
         Text("App exclusions", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "Excluded apps bypass Silence’s local VPN (useful for banking apps). " +
+            "Excluded apps bypass Silence’s local VPN (required for some apps that show “offline” under any VPN, e.g. Spotify). " +
                 "${excluded.size} excluded.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        // One-tap fix for streaming apps that refuse VPN
+        val missingBypass = CompatibilityAllowlist.suggestedVpnExcludes.filterKeys { it !in excluded }
+        if (missingBypass.isNotEmpty()) {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("App shows offline? (Spotify, etc.)", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Many music/video apps treat Android’s VPN as no internet. " +
+                            "Bypass them below, then restart protection. " +
+                            "Spotify domains are also allowlisted so DNS lists won’t sinkhole them.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    missingBypass.forEach { (pkg, label) ->
+                        val installed = apps.any { it.packageName == pkg }
+                        if (installed || pkg.contains("spotify")) {
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        app.settingsStore.setExcludedPackages(excluded + pkg)
+                                        if (vpnState == ProtectionState.ON) {
+                                            VpnController.markNeedsRestart()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text("Bypass $label") }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                val pkgs = CompatibilityAllowlist.suggestedVpnExcludes.keys
+                                app.settingsStore.setExcludedPackages(excluded + pkgs)
+                                if (vpnState == ProtectionState.ON) {
+                                    VpnController.markNeedsRestart()
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Bypass all common streaming apps") }
+                }
+            }
+        }
 
         if (needsRestart) {
             Card(Modifier.fillMaxWidth()) {

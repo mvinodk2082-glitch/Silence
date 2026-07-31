@@ -22,3 +22,5 @@ gen/
 out/
 .kotlin/
 
+.github/workflows/
+releases/
