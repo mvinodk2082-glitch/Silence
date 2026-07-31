@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Silence</string>
+    <string name="notification_channel_name">Protection status</string>
+    <string name="notification_channel_desc">Quiet status while Silence is filtering DNS. No sound.</string>
+    <string name="notification_title">Silence is on</string>
+    <string name="notification_text">%1$d blocked today · local filter only</string>
+    <string name="vpn_session_name">Silence</string>
+    <string name="vpn_permission_rationale">Silence uses Android’s VPN API only as a local filter on this device. Your traffic is not sent to any remote VPN server.</string>
+    <string name="private_dns_warning_title">Private DNS may bypass Silence</string>
+</resources>
