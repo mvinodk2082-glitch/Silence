@@ -1,0 +1,63 @@
+# Copy this file to .github/workflows/android.yml on GitHub to enable CI builds.
+# (Pushing workflow files requires the `workflow` OAuth scope on the GitHub CLI token.)
+#
+# One-time enable (pick one):
+#   A) Web UI: Repo → Add file → Create new file → path `.github/workflows/android.yml` → paste this file
+#   B) CLI:    gh auth refresh -h github.com -s workflow && git add .github/workflows/android.yml && git commit -m "Add CI" && git push
+#
+name: Android CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: silence-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: silence-test-results
+          path: app/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 14
