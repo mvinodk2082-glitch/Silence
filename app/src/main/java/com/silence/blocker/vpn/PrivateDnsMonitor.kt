@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * - private_dns_specifier: hostname when mode is "hostname"
  */
 object PrivateDnsMonitor {
-    private val _status = MutableStateFlow(PrivateDnsStatus.Unknown)
+    private val _status = MutableStateFlow<PrivateDnsStatus>(PrivateDnsStatus.Unknown)
     val status: StateFlow<PrivateDnsStatus> = _status.asStateFlow()
 
     fun refresh(context: Context): PrivateDnsStatus {
