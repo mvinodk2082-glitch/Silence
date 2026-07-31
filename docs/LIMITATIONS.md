@@ -20,6 +20,13 @@ Two separate causes:
 
 After bypass, Spotify traffic no longer goes through Silence (ads inside Spotify may return).
 
+### Optional L3: mute/skip free audio ads
+With Spotify **bypassed**, enable **Settings → Mute Spotify ads (experimental)**.  
+Silence watches media sessions / notifications and mutes (or skips) when playback looks like an ad.  
+This is **not DNS** and is **not 100%** — Spotify can change metadata anytime.
+
+Full layer analysis: [SPOTIFY_NETWORK_ARCHITECTURE.md](./SPOTIFY_NETWORK_ARCHITECTURE.md)
+
 ## What often still gets through
 
 ### 1. First-party / same-origin ads

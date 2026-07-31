@@ -8,6 +8,7 @@ import com.silence.blocker.filter.FilterEngine
 import com.silence.blocker.lists.ListRepository
 import com.silence.blocker.lists.ListUpdateManager
 import com.silence.blocker.lists.scheduleListUpdates
+import com.silence.blocker.media.MediaAdGuard
 import com.silence.blocker.vpn.PrivateDnsMonitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,7 @@ class SilenceApp : Application() {
             listUpdateManager.loadCachedIntoEngine()
             PrivateDnsMonitor.refresh(this@SilenceApp)
             scheduleListUpdates(this@SilenceApp, settingsStore)
+            MediaAdGuard.startIfEnabled(this@SilenceApp)
 
             // First install: if default packs have no cache, try one update (wifi-only respected)
             val statuses = listUpdateManager.packStatuses.value

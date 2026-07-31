@@ -36,6 +36,7 @@ class SettingsStore(private val context: Context) {
         val powerSaverMode = booleanPreferencesKey("power_saver_mode")
         val alwaysOnConfirmed = booleanPreferencesKey("always_on_confirmed")
         val batteryTipDismissed = booleanPreferencesKey("battery_tip_dismissed")
+        val spotifyAdMuteEnabled = booleanPreferencesKey("spotify_ad_mute_enabled")
     }
 
     val protectionEnabled: Flow<Boolean> = context.dataStore.data.map {
@@ -105,6 +106,10 @@ class SettingsStore(private val context: Context) {
         it[Keys.batteryTipDismissed] ?: false
     }
 
+    val spotifyAdMuteEnabled: Flow<Boolean> = context.dataStore.data.map {
+        it[Keys.spotifyAdMuteEnabled] ?: false
+    }
+
     suspend fun setProtectionEnabled(value: Boolean) {
         context.dataStore.edit { it[Keys.protectionEnabled] = value }
     }
@@ -170,6 +175,10 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setBatteryTipDismissed(value: Boolean) {
         context.dataStore.edit { it[Keys.batteryTipDismissed] = value }
+    }
+
+    suspend fun setSpotifyAdMuteEnabled(value: Boolean) {
+        context.dataStore.edit { it[Keys.spotifyAdMuteEnabled] = value }
     }
 
     /** First-run: seed default pack selection once. */

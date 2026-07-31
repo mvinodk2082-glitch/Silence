@@ -12,8 +12,8 @@ android {
         applicationId = "com.silence.blocker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.4.2-spotify"
+        versionCode = 7
+        versionName = "0.4.3-spotify-media"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

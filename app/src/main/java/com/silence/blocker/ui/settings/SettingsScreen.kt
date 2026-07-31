@@ -40,6 +40,7 @@ import com.silence.blocker.BuildConfig
 import com.silence.blocker.SilenceApp
 import com.silence.blocker.filter.ProtectionProfile
 import com.silence.blocker.lists.scheduleListUpdates
+import com.silence.blocker.media.MediaAdGuard
 import com.silence.blocker.util.UpdateLinks
 import com.silence.blocker.vpn.AlwaysOnVpnGuide
 import com.silence.blocker.vpn.BatteryHelper
@@ -336,6 +337,57 @@ fun SettingsScreen() {
                         scheduleListUpdates(context, app.settingsStore)
                     }
                 },
+            )
+        }
+
+        Text("Spotify (network design)", fontWeight = FontWeight.SemiBold)
+        Text(
+            "DNS cannot cleanly remove free Spotify audio ads (music and ads share CDNs). " +
+                "Silence excludes Spotify from the VPN so it stays online, then optionally mutes ads at the media layer.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        val spotifyMute by app.settingsStore.spotifyAdMuteEnabled.collectAsStateWithLifecycle(false)
+        val mediaStatus by MediaAdGuard.status.collectAsStateWithLifecycle()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("Mute Spotify ads (experimental)", fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Auto-bypasses Spotify VPN · needs Notification access · not 100%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = spotifyMute,
+                onCheckedChange = { checked ->
+                    MediaAdGuard.setEnabled(context, checked)
+                    if (checked && VpnController.state.value == com.silence.blocker.vpn.ProtectionState.ON) {
+                        VpnController.markNeedsRestart()
+                    }
+                },
+            )
+        }
+        Text(
+            mediaStatus,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        if (spotifyMute && !MediaAdGuard.isNotificationAccessEnabled(context)) {
+            Button(
+                onClick = { MediaAdGuard.openNotificationAccessSettings(context) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Grant notification access") }
+        }
+        if (spotifyMute) {
+            Text(
+                "Restart protection after enabling so Spotify exclusion applies to the VPN.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
