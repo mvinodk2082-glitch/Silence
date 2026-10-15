@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import com.silence.blocker.data.SettingsStore
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Restarts protection after reboot / package replace if the user left it enabled.
@@ -22,26 +24,32 @@ class BootCompletedReceiver : BroadcastReceiver() {
         if (!allowed) return
 
         val pending = goAsync()
-        Thread {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val app = context.applicationContext
                 val settings = SettingsStore(app)
-                val enabled = runBlocking { settings.protectionEnabled.first() }
-                val boot = runBlocking { settings.startOnBoot.first() }
+                val enabled = settings.protectionEnabled.first()
+                val boot = settings.startOnBoot.first()
                 // Package replace: resume if protection was enabled (even if boot toggle off)
                 val shouldStart = when (action) {
                     Intent.ACTION_MY_PACKAGE_REPLACED -> enabled
                     else -> enabled && boot
                 }
-                if (shouldStart && VpnController.prepareIntent(app) == null) {
-                    // Small delay so ConnectivityService is ready on some OEMs
-                    Thread.sleep(1_500)
+                // If Always-on VPN owns startup, the system starts us; don't double-start.
+                val alwaysOn = action != Intent.ACTION_MY_PACKAGE_REPLACED && isAlwaysOnUs(app)
+                if (shouldStart && !alwaysOn && VpnController.prepareIntent(app) == null) {
                     VpnController.start(app)
                 }
             } catch (_: Exception) {
             } finally {
                 pending.finish()
             }
-        }.start()
+        }
+    }
+
+    private fun isAlwaysOnUs(context: Context): Boolean = try {
+        android.provider.Settings.Secure.getString(context.contentResolver, "always_on_vpn_app") == context.packageName
+    } catch (_: Exception) {
+        false
     }
 }

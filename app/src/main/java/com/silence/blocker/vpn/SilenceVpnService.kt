@@ -51,6 +51,42 @@ class SilenceVpnService : VpnService() {
     private var packetLoop: PacketLoop? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var starting = false
+    @Volatile private var activeDns: DnsServer? = null
+    private var restartAttempts = 0
+    private var screenReceiver: android.content.BroadcastReceiver? = null
+
+    private fun isScreenOn(): Boolean = (getSystemService(POWER_SERVICE) as PowerManager).isInteractive
+
+    private fun flushStats() {
+        val app = application as com.silence.blocker.SilenceApp
+        val snap = app.filterEngine.snapshotNow()
+        serviceScope.launch { StatsStore(applicationContext).saveToday(snap.blockedToday, snap.allowedToday) }
+        VpnHealthMonitor.publish()
+    }
+
+    private fun registerScreenReceiver() {
+        if (screenReceiver != null) return
+        val r = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context, i: Intent) {
+                when (i.action) {
+                    Intent.ACTION_SCREEN_OFF -> flushStats()
+                    Intent.ACTION_SCREEN_ON -> {
+                        PrivateDnsMonitor.refresh(applicationContext)
+                        BatteryHelper.refresh(applicationContext)
+                    }
+                }
+            }
+        }
+        registerReceiver(r, android.content.IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON)
+        })
+        screenReceiver = r
+    }
+
+    private fun unregisterScreenReceiver() {
+        screenReceiver?.let { try { unregisterReceiver(it) } catch (_: Exception) {} }
+        screenReceiver = null
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -118,6 +154,7 @@ class SilenceVpnService : VpnService() {
                 val dnsServer = DnsServer(app.filterEngine).also {
                     it.setUpstream(upstream)
                 }
+                activeDns = dnsServer
 
                 val builder = Builder()
                     .setSession(getString(R.string.vpn_session_name))
@@ -175,65 +212,47 @@ class SilenceVpnService : VpnService() {
                 settings.setProtectionEnabled(true)
                 registerNetworkMonitor()
 
-                // Throttled notification updates (battery-friendly)
+                registerScreenReceiver()
+
+                // SL-04: notification refresh >=60 s, only when screen on and count changed
                 notifyJob = launch {
                     var lastBlocked = -1L
                     while (isActive) {
-                        val snap = app.filterEngine.snapshotNow()
-                        if (snap.blockedToday != lastBlocked) {
-                            lastBlocked = snap.blockedToday
-                            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                            nm.notify(
-                                NOTIFICATION_ID,
-                                buildNotification(snap.blockedToday, healthy = true),
-                            )
+                        if (isScreenOn()) {
+                            val snap = app.filterEngine.snapshotNow()
+                            if (snap.blockedToday != lastBlocked) {
+                                lastBlocked = snap.blockedToday
+                                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                                nm.notify(NOTIFICATION_ID, buildNotification(snap.blockedToday, healthy = true))
+                            }
                         }
                         delay(NOTIFY_INTERVAL_MS)
                     }
                 }
 
-                // Persist stats; longer interval when power save or user prefers saver
+                // SL-04: stats persisted on screen-off / stop, plus slow fallback
                 statsJob = launch {
                     while (isActive) {
-                        val pm = getSystemService(POWER_SERVICE) as PowerManager
-                        val lowPower = pm.isPowerSaveMode || powerSaverFlush
-                        delay(if (lowPower) STATS_FLUSH_MS_SAVER else STATS_FLUSH_MS)
-                        PrivateDnsMonitor.refresh(applicationContext)
-                        BatteryHelper.refresh(applicationContext)
-                        val snap = app.filterEngine.snapshotNow()
-                        statsStore.saveToday(snap.blockedToday, snap.allowedToday)
-                        VpnHealthMonitor.publish()
+                        delay(STATS_FLUSH_MS)
+                        flushStats()
                     }
                 }
 
-                // Health watchdog: if packet loop exits unexpectedly while enabled, restart
-                healthJob = launch {
-                    while (isActive) {
-                        delay(HEALTH_CHECK_MS)
-                        val loopRef = packetLoop
-                        val enabled = settings.protectionEnabled.first()
-                        if (enabled && vpnInterface != null && loopRef != null && !loopRef.isRunning) {
-                            // Loop died
-                            VpnController.setState(
-                                ProtectionState.ERROR,
-                                "DNS loop stopped — recovering…",
-                            )
-                            delay(500)
-                            tearDown(clearEnabledPreference = false, stopService = false)
-                            delay(400)
-                            startProtection()
-                            return@launch
-                        }
-                    }
-                }
-
+                // SL-04: no health poll; restart when the loop exits unexpectedly, with backoff
                 loopJob = launch {
-                    try {
-                        loop.start()
-                    } finally {
-                        // If loop ends while we still expect VPN, sticky recovery path handles it
+                    loop.start()
+                    if (!isActive || packetLoop !== loop) return@launch
+                    if (!settings.protectionEnabled.first()) return@launch
+                    VpnController.setState(ProtectionState.ERROR, "DNS loop stopped — recovering…")
+                    val backoff = (1000L shl restartAttempts.coerceAtMost(5)).coerceAtMost(30_000L)
+                    restartAttempts++
+                    serviceScope.launch {
+                        tearDown(clearEnabledPreference = false, stopService = false)
+                        delay(backoff)
+                        startProtection()
                     }
                 }
+                launch { delay(120_000); restartAttempts = 0 }
             } catch (e: Exception) {
                 VpnController.setState(ProtectionState.ERROR, e.message ?: "Unknown error")
                 tearDown(clearEnabledPreference = false, stopService = true)
@@ -248,10 +267,12 @@ class SilenceVpnService : VpnService() {
         val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                activeDns?.flushCache()
                 PrivateDnsMonitor.refresh(applicationContext)
             }
 
             override fun onLost(network: Network) {
+                activeDns?.flushCache()
                 PrivateDnsMonitor.refresh(applicationContext)
             }
 
@@ -291,6 +312,9 @@ class SilenceVpnService : VpnService() {
      * @param stopService end the Android service
      */
     private fun tearDown(clearEnabledPreference: Boolean, stopService: Boolean) {
+        if (packetLoop != null) flushStats()
+        unregisterScreenReceiver()
+        activeDns = null
         packetLoop?.stop()
         packetLoop = null
         loopJob?.cancel()
@@ -427,9 +451,7 @@ class SilenceVpnService : VpnService() {
         const val FAKE_DNS = "10.10.10.1"
         const val VPN_ADDRESS_V6 = "fd00:10:10:10::2"
         const val FAKE_DNS_V6 = "fd00:10:10:10::1"
-        private const val STATS_FLUSH_MS = 20_000L
-        private const val STATS_FLUSH_MS_SAVER = 60_000L
-        private const val NOTIFY_INTERVAL_MS = 5_000L
-        private const val HEALTH_CHECK_MS = 12_000L
+        private const val STATS_FLUSH_MS = 300_000L
+        private const val NOTIFY_INTERVAL_MS = 60_000L
     }
 }
