@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.silence.blocker.ui.theme.ScreenTitle
+import com.silence.blocker.ui.theme.SilenceCard
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
 import kotlinx.coroutines.flow.first
@@ -47,10 +49,10 @@ fun RulesScreen() {
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Custom rules", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        ScreenTitle("Custom rules")
         OutlinedTextField(
             value = input,
             onValueChange = { input = it },

@@ -1,6 +1,11 @@
 package com.silence.blocker.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.silence.blocker.ui.theme.ScreenTitle
+import com.silence.blocker.ui.theme.SilenceCard
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
@@ -82,32 +89,86 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
             text = "Silence",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.fillMaxWidth(),
         )
-        Text(
-            text = "Device-wide DNS ad blocking. Local only — no remote VPN.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        // Calm status hero
+        Column(
+            Modifier.fillMaxWidth().padding(vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    ),
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = statusLabel,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (isOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(24.dp))
+            Text(
+                text = "${stats.blockedToday}",
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "blocked today",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "${stats.listHosts} hosts · ${stats.allowedToday} allowed" +
+                    if (health.dnsHandled > 0) " · ${health.dnsHandled} DNS handled" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+            )
+            error?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+        }
 
-        Spacer(Modifier.height(8.dp))
+        when {
+            isOn || state == ProtectionState.RESTARTING -> {
+                OutlinedButton(
+                    onClick = onDisable,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = state != ProtectionState.RESTARTING,
+                ) { Text("Turn protection off") }
+                if (isOn) {
+                    TextButton(onClick = { VpnController.restart(context) }) {
+                        Text("Restart protection")
+                    }
+                }
+            }
+            else -> {
+                Button(
+                    onClick = onEnable,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = state != ProtectionState.STARTING &&
+                        state != ProtectionState.REQUESTING_PERMISSION,
+                ) { Text("Turn protection on") }
+            }
+        }
+
 
         if (needsRestart && isOn) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                ),
-            ) {
+            SilenceCard(containerColor = MaterialTheme.colorScheme.primaryContainer, outline = false) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Restart required", fontWeight = FontWeight.SemiBold)
                     Text(
@@ -164,7 +225,7 @@ fun HomeScreen(
         }
 
         if (!alwaysOnConfirmed) {
-            Card(Modifier.fillMaxWidth()) {
+            SilenceCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Always-on VPN (recommended)", fontWeight = FontWeight.SemiBold)
                     Text(
@@ -194,76 +255,10 @@ fun HomeScreen(
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isOn) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
-            ),
-        ) {
-            Column(
-                Modifier.padding(24.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = statusLabel,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "${stats.blockedToday}",
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = "blocked today",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "${stats.listHosts} hosts · ${stats.allowedToday} allowed" +
-                        if (health.dnsHandled > 0) " · ${health.dnsHandled} DNS handled" else "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                error?.let {
-                    Spacer(Modifier.height(8.dp))
-                    Text(it, color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
 
-        when {
-            isOn || state == ProtectionState.RESTARTING -> {
-                OutlinedButton(
-                    onClick = onDisable,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state != ProtectionState.RESTARTING,
-                ) { Text("Turn protection off") }
-                if (isOn) {
-                    TextButton(onClick = { VpnController.restart(context) }) {
-                        Text("Restart protection")
-                    }
-                }
-            }
-            else -> {
-                Button(
-                    onClick = onEnable,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state != ProtectionState.STARTING &&
-                        state != ProtectionState.REQUESTING_PERMISSION,
-                ) { Text("Turn protection on") }
-            }
-        }
-
-        Card(modifier = Modifier.fillMaxWidth()) {
+        SilenceCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("How it works", fontWeight = FontWeight.SemiBold)
+                Text("How it works", style = MaterialTheme.typography.titleSmall)
                 Text(
                     "Silence opens a local VPN tunnel and becomes your DNS (IPv4 + IPv6). " +
                         "Ad, tracker, and media-ad domains get sinkholed. " +
@@ -275,9 +270,9 @@ fun HomeScreen(
         }
 
         if (stats.recentBlocked.isNotEmpty()) {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            SilenceCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Recently blocked", fontWeight = FontWeight.SemiBold)
+                    Text("Recently blocked", style = MaterialTheme.typography.titleSmall)
                     stats.recentBlocked.take(8).forEach { host ->
                         Text(
                             host,
@@ -300,12 +295,7 @@ private fun WarningCard(
     secondaryLabel: String? = null,
     onSecondary: (() -> Unit)? = null,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
-    ) {
+    SilenceCard(containerColor = MaterialTheme.colorScheme.errorContainer, outline = false) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = title,

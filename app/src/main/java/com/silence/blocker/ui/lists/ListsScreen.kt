@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.silence.blocker.ui.theme.ScreenTitle
+import com.silence.blocker.ui.theme.SilenceCard
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
 import com.silence.blocker.filter.FilterCategory
@@ -52,17 +54,17 @@ fun ListsScreen() {
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Filter lists", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        ScreenTitle("Filter lists")
         Text(
             "Built-in samples always load. Enable remote packs and update to pull full host lists onto this device.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Card(Modifier.fillMaxWidth()) {
+        SilenceCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     "${updateState.totalHostsLoaded.coerceAtLeast(app.filterEngine.snapshot.value.listHosts)} hosts active",
@@ -109,7 +111,7 @@ fun ListsScreen() {
 
         Text("Categories", fontWeight = FontWeight.SemiBold)
         FilterCategory.entries.forEach { category ->
-            Card(Modifier.fillMaxWidth()) {
+            SilenceCard {
                 Row(
                     Modifier.padding(16.dp).fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -144,7 +146,7 @@ fun ListsScreen() {
         PackCatalog.all.forEach { pack ->
             val status = packStatuses[pack.id]
             val enabled = pack.id in enabledPacks
-            Card(Modifier.fillMaxWidth()) {
+            SilenceCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(
                         Modifier.fillMaxWidth(),
@@ -214,7 +216,7 @@ fun ListsScreen() {
         }
 
         Text("Auto-update", fontWeight = FontWeight.SemiBold)
-        Card(Modifier.fillMaxWidth()) {
+        SilenceCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     Modifier.fillMaxWidth(),

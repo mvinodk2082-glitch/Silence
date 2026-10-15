@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.silence.blocker.ui.theme.ScreenTitle
+import com.silence.blocker.ui.theme.SilenceCard
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
 
@@ -27,11 +29,11 @@ fun StatsScreen() {
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Statistics", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Card(Modifier.fillMaxWidth()) {
+        ScreenTitle("Statistics")
+        SilenceCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Blocked today: ${stats.blockedToday}")
                 Text("Allowed queries: ${stats.allowedToday}")
@@ -41,8 +43,8 @@ fun StatsScreen() {
         Text("Recent blocks", fontWeight = FontWeight.SemiBold)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items(stats.recentBlocked) { host ->
-                Card(Modifier.fillMaxWidth()) {
-                    Text(host, Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium)
+                SilenceCard(outline = false, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    Text(host, Modifier.padding(horizontal = 16.dp, vertical = 12.dp), style = MaterialTheme.typography.bodyMedium)
                 }
             }
             if (stats.recentBlocked.isEmpty()) {
