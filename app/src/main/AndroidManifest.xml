@@ -63,6 +63,10 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".media.UnmuteReceiver"
+            android:exported="false" />
+
         <!-- L3: unlock MediaSession list + Spotify notification heuristics -->
         <service
             android:name=".media.SilenceNotificationListener"

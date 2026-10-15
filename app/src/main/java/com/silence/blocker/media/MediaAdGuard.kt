@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * L3 Spotify ad reduction: media-session mute/skip while Spotify is VPN-excluded.
+ * L3 Spotify ad handling: local mute only (never skips or touches Spotify) while Spotify is VPN-excluded.
  */
 object MediaAdGuard {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -32,11 +32,6 @@ object MediaAdGuard {
     private val _status = MutableStateFlow("Off")
     val status: StateFlow<String> = _status.asStateFlow()
 
-    @Volatile
-    private var lastNotifTitle: String? = null
-
-    @Volatile
-    private var lastNotifText: String? = null
 
     fun isNotificationAccessEnabled(context: Context): Boolean {
         val cn = ComponentName(context, SilenceNotificationListener::class.java)
@@ -76,7 +71,7 @@ object MediaAdGuard {
                 launch(Dispatchers.Main) {
                     startWatcher(app)
                     _status.value = if (isNotificationAccessEnabled(app)) {
-                        "On — watching Spotify (grant notification access if mute never triggers)"
+                        "On — mutes Spotify ads locally, never skips"
                     } else {
                         "On — enable Notification access for Silence (required)"
                     }
@@ -108,23 +103,26 @@ object MediaAdGuard {
         }
     }
 
+    private val _mutedNow = MutableStateFlow(false)
+    val mutedNow: StateFlow<Boolean> = _mutedNow.asStateFlow()
+
+    /** Crash/kill recovery: if a previous process muted and died, restore sound. */
+    fun recover(context: Context) {
+        PlaybackAdActions.restore(context)
+        _mutedNow.value = false
+    }
+
     fun onSpotifyNotification(context: Context, title: String?, text: String?) {
-        lastNotifTitle = title
-        lastNotifText = text
-        // Heuristic-only path when sessions empty
         if (!_active.value) return
-        val ad = SpotifyAdDetector.looksLikeAd(
-            packageName = "com.spotify.music",
-            metadata = null,
-            playbackState = null,
-            notificationTitle = title,
-            notificationText = text,
-        )
-        val actions = actionsRef.get() ?: return
-        if (ad) {
-            actions.onAdDetected(null, preferSkip = false)
-            _status.value = "Muted ad (notification heuristic)"
-        }
+        watcherRef.get()?.onNotification(title, text)
+    }
+
+    /** User "Wrong mute? Unmute now": unmute immediately and don't re-mute this item. */
+    fun unmuteNow(context: Context) {
+        watcherRef.get()?.userUnmute()
+        PlaybackAdActions.restore(context)
+        _mutedNow.value = false
+        _status.value = "Unmuted by you"
     }
 
     private fun startWatcher(context: Context) {
@@ -132,9 +130,18 @@ object MediaAdGuard {
             _active.value = true
             return
         }
-        val actions = PlaybackAdActions(context)
+        val app = context.applicationContext
+        val actions = PlaybackAdActions(app)
         actionsRef.set(actions)
-        val watcher = SpotifyMediaWatcher(context, actions, preferSkip = true)
+        val watcher = SpotifyMediaWatcher(
+            app,
+            actions,
+            onNewAd = {
+                _status.value = "Muted a Spotify ad"
+                scope.launch(Dispatchers.IO) { SettingsStore(app).incrementAdsMuted() }
+            },
+            onMuteChanged = { _mutedNow.value = it },
+        )
         watcherRef.set(watcher)
         watcher.start()
         _active.value = true
@@ -143,7 +150,8 @@ object MediaAdGuard {
 
     private fun stopWatcher() {
         watcherRef.getAndSet(null)?.stop()
-        actionsRef.getAndSet(null)?.forceUnmute()
+        actionsRef.getAndSet(null)?.unmute()
+        _mutedNow.value = false
         _active.value = false
         Log.i(TAG, "MediaAdGuard stopped")
     }

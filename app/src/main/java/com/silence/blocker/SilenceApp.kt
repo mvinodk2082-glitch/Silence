@@ -57,6 +57,7 @@ class SilenceApp : Application() {
             listUpdateManager.loadCachedIntoEngine()
             PrivateDnsMonitor.refresh(this@SilenceApp)
             scheduleListUpdates(this@SilenceApp, settingsStore)
+            MediaAdGuard.recover(this@SilenceApp)
             MediaAdGuard.startIfEnabled(this@SilenceApp)
 
             // First install: if default packs have no cache, try one update (wifi-only respected)
