@@ -40,6 +40,7 @@ class ListUpdateWorker(
 
         fun schedule(context: Context, wifiOnly: Boolean) {
             val constraints = Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
                 .setRequiredNetworkType(
                     if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED,
                 )

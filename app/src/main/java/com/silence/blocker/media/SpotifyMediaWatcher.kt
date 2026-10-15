@@ -26,15 +26,6 @@ class SpotifyMediaWatcher(
     private val controllers = mutableMapOf<String, MediaController>()
     private var sessionListener: MediaSessionManager.OnActiveSessionsChangedListener? = null
 
-    private val pollRunnable = object : Runnable {
-        override fun run() {
-            if (!running.get()) return
-            refreshControllers()
-            evaluateAll()
-            handler.postDelayed(this, POLL_MS)
-        }
-    }
-
     fun start() {
         if (!running.compareAndSet(false, true)) return
         val msm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
@@ -51,12 +42,11 @@ class SpotifyMediaWatcher(
             Log.w(TAG, "session listener failed: ${e.message}")
         }
         refreshControllers()
-        handler.post(pollRunnable)
+        evaluateAll()
     }
 
     fun stop() {
         if (!running.compareAndSet(true, false)) return
-        handler.removeCallbacks(pollRunnable)
         val msm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
         sessionListener?.let {
             try {
@@ -158,6 +148,5 @@ class SpotifyMediaWatcher(
 
     companion object {
         private const val TAG = "SpotifyMediaWatcher"
-        private const val POLL_MS = 1_200L
     }
 }

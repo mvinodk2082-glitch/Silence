@@ -49,13 +49,9 @@ object BatteryHelper {
     /** Opens the system “ignore battery optimizations” dialog for this app. */
     @SuppressLint("BatteryLife")
     fun requestIgnoreOptimizationsIntent(context: Context): Intent? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return null
-        val app = context.applicationContext
-        val pm = app.getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (pm.isIgnoringBatteryOptimizations(app.packageName)) return null
-        return Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = Uri.parse("package:${app.packageName}")
-        }
+        // SL-07: a VPN foreground service doesn't need the exemption; callers fall back to
+        // the app's battery settings page instead of the direct-request dialog.
+        return null
     }
 
     /** Fallback: open app battery settings page. */

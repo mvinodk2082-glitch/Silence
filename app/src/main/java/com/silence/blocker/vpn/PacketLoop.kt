@@ -23,6 +23,9 @@ class PacketLoop(
     private val vpnOutput: FileOutputStream,
 ) {
     private val running = AtomicBoolean(false)
+    private class Job(val query: ByteArray, val reply: (ByteArray) -> ByteArray)
+    private val queue = java.util.concurrent.ArrayBlockingQueue<Job>(QUEUE_CAPACITY)
+    private val workers = mutableListOf<Thread>()
     private val writeLock = Any()
 
     val isRunning: Boolean get() = running.get()
@@ -30,6 +33,7 @@ class PacketLoop(
     fun start() {
         running.set(true)
         VpnHealthMonitor.resetSession()
+        startWorkers()
         val buffer = ByteArray(32767)
         while (running.get()) {
             val length = try {
@@ -42,10 +46,43 @@ class PacketLoop(
             handlePacket(buffer, length)
         }
         running.set(false)
+        stopWorkers()
     }
 
     fun stop() {
         running.set(false)
+        stopWorkers()
+    }
+
+    private fun startWorkers() {
+        repeat(WORKERS) { n ->
+            val t = Thread({
+                while (running.get()) {
+                    val job = try { queue.poll(1, java.util.concurrent.TimeUnit.SECONDS) } catch (_: InterruptedException) { break } ?: continue
+                    val resp = try {
+                        dnsServer.handleQuery(job.query, job.query.size, protectUDP, protectTCP)
+                    } catch (_: Exception) { null } ?: continue
+                    VpnHealthMonitor.markDnsHandled()
+                    writeTun(job.reply(resp))
+                }
+            }, "silence-dns-$n")
+            t.isDaemon = true
+            synchronized(workers) { workers.add(t) }
+            t.start()
+        }
+    }
+
+    private fun stopWorkers() {
+        synchronized(workers) { workers.forEach { it.interrupt() }; workers.clear() }
+        queue.clear()
+    }
+
+    /** Hand a query to the worker pool; if the queue is full answer SERVFAIL immediately. */
+    private fun enqueue(query: ByteArray, reply: (ByteArray) -> ByteArray) {
+        if (!queue.offer(Job(query, reply))) {
+            val q = com.silence.blocker.dns.DnsPacket.parseQuestion(query, query.size) ?: return
+            writeTun(reply(com.silence.blocker.dns.DnsPacket.buildServFail(query, query.size, q)))
+        }
     }
 
     private fun handlePacket(packet: ByteArray, length: Int) {
@@ -78,18 +115,9 @@ class PacketLoop(
         if (dnsLen < 12) return
 
         val dnsQuery = packet.copyOfRange(dnsOffset, dnsOffset + dnsLen)
-        val dnsResponse = dnsServer.handleQuery(dnsQuery, dnsLen, protectUDP, protectTCP) ?: return
-        VpnHealthMonitor.markDnsHandled()
-
-        writeTun(
-            buildIpv4UdpPacket(
-                srcIp = dstIp,
-                dstIp = srcIp,
-                srcPort = 53,
-                dstPort = srcPort,
-                payload = dnsResponse,
-            ),
-        )
+        enqueue(dnsQuery) { resp ->
+            buildIpv4UdpPacket(srcIp = dstIp, dstIp = srcIp, srcPort = 53, dstPort = srcPort, payload = resp)
+        }
     }
 
     private fun handleIpv6(packet: ByteArray, length: Int) {
@@ -112,18 +140,9 @@ class PacketLoop(
         if (dnsLen < 12) return
 
         val dnsQuery = packet.copyOfRange(dnsOffset, dnsOffset + dnsLen)
-        val dnsResponse = dnsServer.handleQuery(dnsQuery, dnsLen, protectUDP, protectTCP) ?: return
-        VpnHealthMonitor.markDnsHandled()
-
-        writeTun(
-            buildIpv6UdpPacket(
-                srcIp = dstIp,
-                dstIp = srcIp,
-                srcPort = 53,
-                dstPort = srcPort,
-                payload = dnsResponse,
-            ),
-        )
+        enqueue(dnsQuery) { resp ->
+            buildIpv6UdpPacket(srcIp = dstIp, dstIp = srcIp, srcPort = 53, dstPort = srcPort, payload = resp)
+        }
     }
 
     private fun writeTun(bytes: ByteArray) {
@@ -274,6 +293,11 @@ class PacketLoop(
             sum = (sum and 0xFFFF) + (sum ushr 16)
         }
         return sum.inv() and 0xFFFF
+    }
+
+    companion object {
+        const val QUEUE_CAPACITY = 256
+        const val WORKERS = 8
     }
 
     private fun readU16(packet: ByteArray, offset: Int): Int =

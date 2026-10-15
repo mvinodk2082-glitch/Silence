@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,14 +14,32 @@ android {
         applicationId = "com.silence.blocker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.4.3-spotify-media"
+        versionCode = 8
+        versionName = "0.5.0-pixel10a"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    val ksFile = rootProject.file("keystore.properties")
+    val ks = Properties().apply { if (ksFile.exists()) ksFile.inputStream().use { load(it) } }
+    signingConfigs {
+        create("release") {
+            val path = ks.getProperty("storeFile") ?: System.getenv("SILENCE_KEYSTORE")
+            if (path != null) {
+                storeFile = file(path)
+                storePassword = ks.getProperty("storePassword") ?: System.getenv("SILENCE_KEYSTORE_PASSWORD")
+                keyAlias = ks.getProperty("keyAlias") ?: System.getenv("SILENCE_KEY_ALIAS") ?: "silence"
+                keyPassword = ks.getProperty("keyPassword") ?: System.getenv("SILENCE_KEY_PASSWORD") ?: storePassword
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
