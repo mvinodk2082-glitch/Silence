@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="silence_bg">#0B0F14</color>
-    <color name="silence_primary">#5EEAD4</color>
-    <color name="silence_on_primary">#042F2E</color>
-    <color name="ic_launcher_background">#0B0F14</color>
+    <color name="silence_bg">#000000</color>
+    <color name="silence_surface">#0A0A0A</color>
+    <color name="silence_surface_2">#121212</color>
+    <color name="silence_surface_3">#1A1A1A</color>
+    <color name="silence_outline">#262626</color>
+    <color name="silence_text">#EDEDED</color>
+    <color name="silence_text_secondary">#A1A1A1</color>
+    <color name="silence_text_muted">#6B6B6B</color>
+    <color name="silence_primary">#7FB8A4</color>
+    <color name="silence_on_primary">#0B1F18</color>
+    <color name="silence_error">#E5807A</color>
+    <color name="ic_launcher_background">#000000</color>
 </resources>

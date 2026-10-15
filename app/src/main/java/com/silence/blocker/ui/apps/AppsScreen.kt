@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.silence.blocker.ui.theme.ScreenTitle
+import com.silence.blocker.ui.theme.SilenceCard
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.silence.blocker.SilenceApp
 import com.silence.blocker.apps.InstalledAppsRepository
@@ -72,10 +74,10 @@ fun AppsScreen() {
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("App exclusions", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        ScreenTitle("App exclusions")
         Text(
             "Excluded apps bypass Silence’s local VPN (required for some apps that show “offline” under any VPN, e.g. Spotify). " +
                 "${excluded.size} excluded.",
@@ -86,8 +88,8 @@ fun AppsScreen() {
         // One-tap fix for streaming apps that refuse VPN
         val missingBypass = CompatibilityAllowlist.suggestedVpnExcludes.filterKeys { it !in excluded }
         if (missingBypass.isNotEmpty()) {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SilenceCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("App shows offline? (Spotify, etc.)", fontWeight = FontWeight.SemiBold)
                     Text(
                         "Many music/video apps treat Android’s VPN as no internet. " +
@@ -129,8 +131,8 @@ fun AppsScreen() {
         }
 
         if (needsRestart) {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SilenceCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Restart protection to apply exclusions", fontWeight = FontWeight.SemiBold)
                     Button(
                         onClick = { VpnController.restart(context) },

@@ -14,8 +14,8 @@ android {
         applicationId = "com.silence.blocker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.5.0-pixel10a"
+        versionCode = 9
+        versionName = "0.5.1-amoled"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

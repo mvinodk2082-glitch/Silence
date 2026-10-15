@@ -1,49 +1,105 @@
 package com.silence.blocker.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
-private val Teal = Color(0xFF5EEAD4)
-private val TealDark = Color(0xFF0F766E)
-private val Bg = Color(0xFF0B0F14)
-private val SurfaceCol = Color(0xFF121821)
-private val OnBg = Color(0xFFE8EEF5)
-private val Muted = Color(0xFF94A3B8)
-private val Danger = Color(0xFFF87171)
+/** AMOLED palette: true black, neutral greys, one desaturated sage accent. */
+object SilencePalette {
+    val Black = Color(0xFF000000)
+    val Surface1 = Color(0xFF0A0A0A)
+    val Surface2 = Color(0xFF121212)
+    val Surface3 = Color(0xFF1A1A1A)
+    val Outline = Color(0xFF262626)
+    val TextPrimary = Color(0xFFEDEDED)
+    val TextSecondary = Color(0xFFA1A1A1)
+    val TextMuted = Color(0xFF6B6B6B)
+    val Accent = Color(0xFF7FB8A4)
+    val OnAccent = Color(0xFF0B1F18)
+    val AccentContainer = Color(0xFF16231E)
+    val Error = Color(0xFFE5807A)
+    val OnError = Color(0xFF2B0E0C)
+    val ErrorContainer = Color(0xFF241514)
+}
 
-private val DarkColors = darkColorScheme(
-    primary = Teal,
-    onPrimary = Color(0xFF042F2E),
-    secondary = TealDark,
-    background = Bg,
-    surface = SurfaceCol,
-    onBackground = OnBg,
-    onSurface = OnBg,
-    onSurfaceVariant = Muted,
-    error = Danger,
+private val AmoledColors = with(SilencePalette) {
+    darkColorScheme(
+        primary = Accent,
+        onPrimary = OnAccent,
+        primaryContainer = AccentContainer,
+        onPrimaryContainer = Accent,
+        secondary = TextSecondary,
+        onSecondary = Black,
+        secondaryContainer = Surface3,
+        onSecondaryContainer = TextPrimary,
+        tertiary = Accent,
+        onTertiary = OnAccent,
+        tertiaryContainer = AccentContainer,
+        onTertiaryContainer = TextPrimary,
+        background = Black,
+        onBackground = TextPrimary,
+        surface = Black,
+        onSurface = TextPrimary,
+        surfaceVariant = Surface3,
+        onSurfaceVariant = TextSecondary,
+        surfaceTint = Color.Transparent,
+        surfaceDim = Black,
+        surfaceBright = Surface3,
+        surfaceContainerLowest = Black,
+        surfaceContainerLow = Surface1,
+        surfaceContainer = Surface1,
+        surfaceContainerHigh = Surface2,
+        surfaceContainerHighest = Surface3,
+        inverseSurface = TextPrimary,
+        inverseOnSurface = Black,
+        inversePrimary = OnAccent,
+        outline = TextMuted,
+        outlineVariant = Outline,
+        scrim = Black,
+        error = Error,
+        onError = OnError,
+        errorContainer = ErrorContainer,
+        onErrorContainer = Error,
+    )
+}
+
+private val base = Typography()
+private val SilenceTypography = Typography(
+    displayMedium = base.displayMedium.copy(fontWeight = FontWeight.Light, letterSpacing = (-0.5).sp),
+    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Medium),
+    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Medium),
+    titleMedium = base.titleMedium.copy(fontWeight = FontWeight.Medium),
+    bodyLarge = base.bodyLarge,
+    bodyMedium = base.bodyMedium,
+    bodySmall = base.bodySmall.copy(lineHeight = 18.sp),
+    labelLarge = base.labelLarge.copy(fontWeight = FontWeight.Medium),
+    labelMedium = base.labelMedium,
 )
 
-private val LightColors = lightColorScheme(
-    primary = TealDark,
-    onPrimary = Color.White,
-    background = Color(0xFFF4F7FB),
-    surface = Color.White,
-    onBackground = Color(0xFF0B0F14),
-    onSurface = Color(0xFF0B0F14),
+private val SilenceShapes = Shapes(
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
 )
 
+/** Always dark AMOLED; dynamic color is intentionally not used so the palette stays consistent. */
 @Composable
 fun SilenceTheme(
-    darkTheme: Boolean = true, // default dark — calm “quiet network” feel
+    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme || isSystemInDarkTheme()) DarkColors else LightColors
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = AmoledColors,
+        typography = SilenceTypography,
+        shapes = SilenceShapes,
         content = content,
     )
 }
