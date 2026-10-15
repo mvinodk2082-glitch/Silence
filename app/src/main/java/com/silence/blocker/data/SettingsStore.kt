@@ -37,6 +37,9 @@ class SettingsStore(private val context: Context) {
         val alwaysOnConfirmed = booleanPreferencesKey("always_on_confirmed")
         val batteryTipDismissed = booleanPreferencesKey("battery_tip_dismissed")
         val spotifyAdMuteEnabled = booleanPreferencesKey("spotify_ad_mute_enabled")
+        val adsMutedTotal = longPreferencesKey("ads_muted_total")
+        val adsMutedToday = longPreferencesKey("ads_muted_today")
+        val adsMutedDay = longPreferencesKey("ads_muted_epoch_day")
     }
 
     val protectionEnabled: Flow<Boolean> = context.dataStore.data.map {
@@ -175,6 +178,24 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setBatteryTipDismissed(value: Boolean) {
         context.dataStore.edit { it[Keys.batteryTipDismissed] = value }
+    }
+
+    data class AdsMuted(val today: Long, val total: Long)
+
+    val adsMuted: Flow<AdsMuted> = context.dataStore.data.map {
+        val day = System.currentTimeMillis() / 86_400_000L
+        val today = if (it[Keys.adsMutedDay] == day) it[Keys.adsMutedToday] ?: 0L else 0L
+        AdsMuted(today, it[Keys.adsMutedTotal] ?: 0L)
+    }
+
+    suspend fun incrementAdsMuted() {
+        val day = System.currentTimeMillis() / 86_400_000L
+        context.dataStore.edit {
+            val today = if (it[Keys.adsMutedDay] == day) it[Keys.adsMutedToday] ?: 0L else 0L
+            it[Keys.adsMutedDay] = day
+            it[Keys.adsMutedToday] = today + 1
+            it[Keys.adsMutedTotal] = (it[Keys.adsMutedTotal] ?: 0L) + 1
+        }
     }
 
     suspend fun setSpotifyAdMuteEnabled(value: Boolean) {

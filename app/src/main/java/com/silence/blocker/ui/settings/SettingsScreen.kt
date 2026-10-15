@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -342,10 +343,12 @@ fun SettingsScreen() {
             )
         }
 
-        Text("Spotify (network design)", fontWeight = FontWeight.SemiBold)
+        Text("Spotify ads", fontWeight = FontWeight.SemiBold)
         Text(
-            "DNS cannot cleanly remove free Spotify audio ads (music and ads share CDNs). " +
-                "Silence excludes Spotify from the VPN so it stays online, then optionally mutes ads at the media layer.",
+            "Silence never blocks, skips or modifies Spotify. It only mutes your phone's media volume, " +
+                "locally on this device, while Spotify itself reports an ad, and restores sound when music resumes " +
+                "(or after 35 s at most). Spotify must be excluded from the VPN (done automatically) so it stays online. " +
+                "For a fully ad-free experience that also supports artists, consider Spotify Premium.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -357,9 +360,9 @@ fun SettingsScreen() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Mute Spotify ads (experimental)", fontWeight = FontWeight.SemiBold)
+                Text("Mute Spotify ads (local, mute-only)", fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Auto-bypasses Spotify VPN · needs Notification access · not 100%",
+                    "Excludes Spotify from VPN · needs Notification access · best effort",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -379,6 +382,16 @@ fun SettingsScreen() {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
         )
+        val adsMuted by app.settingsStore.adsMuted.collectAsStateWithLifecycle(com.silence.blocker.data.SettingsStore.AdsMuted(0, 0))
+        val mutedNow by MediaAdGuard.mutedNow.collectAsStateWithLifecycle()
+        Text(
+            "Ads muted: ${adsMuted.today} today · ${adsMuted.total} total",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (mutedNow) {
+            TextButton(onClick = { MediaAdGuard.unmuteNow(context) }) { Text("Wrong mute? Unmute now") }
+        }
         if (spotifyMute && !MediaAdGuard.isNotificationAccessEnabled(context)) {
             Button(
                 onClick = { MediaAdGuard.openNotificationAccessSettings(context) },

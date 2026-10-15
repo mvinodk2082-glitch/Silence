@@ -35,7 +35,9 @@ import com.silence.blocker.ui.theme.ScreenTitle
 import com.silence.blocker.ui.theme.SilenceCard
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.Row
 import com.silence.blocker.SilenceApp
+import com.silence.blocker.media.MediaAdGuard
 import com.silence.blocker.vpn.AlwaysOnVpnGuide
 import com.silence.blocker.vpn.BatteryHelper
 import com.silence.blocker.vpn.PrivateDnsMonitor
@@ -62,6 +64,9 @@ fun HomeScreen(
     val battery by BatteryHelper.status.collectAsStateWithLifecycle()
     val health by VpnHealthMonitor.snapshot.collectAsStateWithLifecycle()
     val alwaysOnConfirmed by app.settingsStore.alwaysOnConfirmed.collectAsStateWithLifecycle(false)
+    val spotifyMute by app.settingsStore.spotifyAdMuteEnabled.collectAsStateWithLifecycle(false)
+    val adsMuted by app.settingsStore.adsMuted.collectAsStateWithLifecycle(com.silence.blocker.data.SettingsStore.AdsMuted(0, 0))
+    val mutedNow by MediaAdGuard.mutedNow.collectAsStateWithLifecycle()
     val batteryDismissed by app.settingsStore.batteryTipDismissed.collectAsStateWithLifecycle(false)
 
     LaunchedEffect(Unit) {
@@ -255,6 +260,27 @@ fun HomeScreen(
             }
         }
 
+
+        if (spotifyMute || adsMuted.total > 0) {
+            SilenceCard {
+                Row(
+                    Modifier.padding(16.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Spotify ads muted", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "${adsMuted.today} today · ${adsMuted.total} total · local mute only",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (mutedNow) {
+                        TextButton(onClick = { MediaAdGuard.unmuteNow(context) }) { Text("Wrong mute? Unmute now") }
+                    }
+                }
+            }
+        }
 
         SilenceCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
